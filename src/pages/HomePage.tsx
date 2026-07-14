@@ -10,7 +10,7 @@ function HomePage({ backendStatus, onNavigate }: HomePageProps) {
     <main className="container py-5">
       <div className="row align-items-center min-vh-75">
         <div className="col-lg-6 mb-4">
-          <span className="badge bg-primary mb-3">Frontend React + Bootstrap</span>
+          <span className="badge bg-primary mb-3">Autor: Roberto Rohca</span>
 
           <h1 className="display-5 fw-bold hero-title">
             Sistema de gestión para consultorio odontológico
