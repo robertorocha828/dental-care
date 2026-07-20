@@ -26,17 +26,15 @@ export default function Sidebar() {
         <div className="fw-bold mb-4 fs-5">Panel</div>
         <Nav className="flex-column gap-1">
           {menuItems.map((item) => (
-            <Nav.Link
+            <NavLink
               key={item.to}
-              as={NavLink}
               to={item.to}
-              className="text-white-50 rounded px-2 py-2"
-              style={({ isActive }: { isActive: boolean }) =>
-                isActive ? { color: 'white', backgroundColor: '#ffffff1a' } : {}
+              className={({ isActive }) =>
+                `nav-link rounded px-2 py-2 ${isActive ? 'text-white bg-white bg-opacity-10' : 'text-white-50'}`
               }
             >
               {item.label}
-            </Nav.Link>
+            </NavLink>
           ))}
         </Nav>
       </div>
