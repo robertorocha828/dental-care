@@ -5,3 +5,12 @@ export interface User {
   rol: string
   activo: boolean
 }
+
+export interface CreateUserPayload {
+  username: string
+  email: string
+  password: string
+  rol?: string
+}
+
+export type UpdateUserPayload = Partial<CreateUserPayload> & { activo?: boolean }

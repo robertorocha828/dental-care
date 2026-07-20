@@ -2,15 +2,23 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Nav, Button } from 'react-bootstrap'
 import { useAuthStore } from '@/store/auth.store'
 
-const menuItems = [
+const adminMenuItems = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Pacientes', to: '/pacientes' },
+  { label: 'Usuarios', to: '/usuarios' },
+  { label: 'Mi perfil', to: '/perfil' },
+]
+
+const pacienteMenuItems = [
+  { label: 'Inicio', to: '/portal' },
   { label: 'Mi perfil', to: '/perfil' },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
   const logout = useAuthStore((s) => s.logout)
+  const rol = useAuthStore((s) => s.rol)
+  const menuItems = rol === 'paciente' ? pacienteMenuItems : adminMenuItems
 
   const handleLogout = () => {
     logout()
