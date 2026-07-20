@@ -17,6 +17,7 @@
     "jsx": "react-jsx",
 
     /* Configuración de Rutas (Agrega esto si no está) */
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
