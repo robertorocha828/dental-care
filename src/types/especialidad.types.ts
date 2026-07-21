@@ -3,3 +3,8 @@ export interface Especialidad {
   nombre: string
   activo: boolean
 }
+
+export interface CreateEspecialidadPayload {
+  nombre: string
+  activo?: boolean
+}
