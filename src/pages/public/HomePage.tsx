@@ -48,7 +48,7 @@ export default function HomePage() {
         <Carousel fade interval={5000}>
           {SLIDES.map((src) => (
             <Carousel.Item key={src}>
-              <div style={{ height: 760, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ height: 'clamp(340px, 62vw, 760px)', position: 'relative', overflow: 'hidden' }}>
                 {/* Capa de fondo: la misma imagen, ampliada y difuminada, rellena todo el espacio */}
                 <img
                   src={src}
