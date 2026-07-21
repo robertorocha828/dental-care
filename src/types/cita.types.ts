@@ -13,6 +13,8 @@ export interface Cita {
 
 export interface CreateCitaPublicPayload {
   emailPaciente: string
+  pacienteId?: string
+  odontologoId?: string
   fechaHora: string
   motivo: string
   observaciones?: string
