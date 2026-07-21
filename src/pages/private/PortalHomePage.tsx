@@ -1,30 +1,82 @@
+import { useEffect, useState } from 'react'
+import { Container, Card, Table, Badge, Alert, Button } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { Container, Row, Col, Card } from 'react-bootstrap'
+import { getPacienteByUsuario } from '@/api/pacientes.api'
+import { getCitasByPaciente } from '@/api/citas.api'
+import type { Cita } from '@/types/cita.types'
 
-const CARDS = [
-  { titulo: 'Mis citas', descripcion: 'Consulta y agenda tus citas en el consultorio.' },
-  { titulo: 'Mi perfil', descripcion: 'Revisa y actualiza tus datos personales.' },
-]
+const estadoBadge: Record<Cita['estado'], string> = {
+  agendada: 'primary',
+  completada: 'success',
+  cancelada: 'danger',
+}
 
 export default function PortalHomePage() {
+  const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
+  const [citas, setCitas] = useState<Cita[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      if (!userId) return
+      try {
+        const paciente = await getPacienteByUsuario(userId)
+        const result = await getCitasByPaciente(paciente.id)
+        setCitas(result.items)
+      } catch {
+        setError('No pudimos encontrar tu ficha de paciente todavía.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [userId])
 
   return (
     <Container>
-      <h4 className="fw-bold mb-1">Bienvenido a tu portal</h4>
-      <p className="text-muted mb-4 small">ID de sesión: {userId}</p>
-      <Row className="g-3">
-        {CARDS.map((card) => (
-          <Col key={card.titulo} xs={12} md={6}>
-            <Card className="h-100 border-0 shadow-sm">
-              <Card.Body className="p-4">
-                <Card.Title className="fw-bold">{card.titulo}</Card.Title>
-                <Card.Text className="text-muted small">{card.descripcion}</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="fw-bold mb-0">Mis citas</h4>
+        <Button variant="primary" onClick={() => navigate('/agendar')}>
+          Agendar cita
+        </Button>
+      </div>
+
+      {error && <Alert variant="warning">{error}</Alert>}
+
+      <Card className="border-0 shadow-sm">
+        <Card.Body className="p-0">
+          <Table hover responsive className="mb-0">
+            <thead>
+              <tr>
+                <th className="ps-4">Fecha y hora</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!loading && !error && citas.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="text-center text-muted py-4">
+                    Todavía no tienes citas agendadas.
+                  </td>
+                </tr>
+              )}
+              {citas.map((cita) => (
+                <tr key={cita.id}>
+                  <td className="ps-4">{new Date(cita.fechaHora).toLocaleString('es-EC')}</td>
+                  <td>{cita.motivo}</td>
+                  <td>
+                    <Badge bg={estadoBadge[cita.estado]}>{cita.estado}</Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
     </Container>
   )
 }
