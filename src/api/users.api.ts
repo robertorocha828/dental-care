@@ -23,6 +23,13 @@ export async function updateUser(id: string, payload: UpdateUserPayload) {
   return data.data
 }
 
+export async function uploadAvatar(id: string, file: File) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  const { data } = await http.post<ApiResponse<User>>(`/users/${id}/avatar`, formData)
+  return data.data
+}
+
 export async function deleteUser(id: string) {
   await http.delete(`/users/${id}`)
 }
