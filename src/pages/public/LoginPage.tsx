@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { login as loginApi } from '@/api/auth.api'
 import { useAuthStore } from '@/store/auth.store'
+import { decodeToken } from '@/lib/jwt'
 
 const schema = z.object({
   email: z.string().min(1, 'Requerido'),
@@ -20,10 +21,14 @@ export default function LoginPage() {
 
   const onSubmit = async (values: FormValues) => {
     const token = await loginApi({ email: values.email, password: values.password })
-    console.log('token recibido:', token)
     setToken(token)
-    console.log('isAuthenticated:', useAuthStore.getState().isAuthenticated)
-    navigate('/dashboard')
+
+    const payload = decodeToken(token)
+    if (payload?.rol === 'paciente') {
+      navigate('/portal')
+    } else {
+      navigate('/dashboard')
+    }
   }
 
   return (
@@ -46,9 +51,19 @@ export default function LoginPage() {
               {isSubmitting ? 'Ingresando...' : 'Ingresar'}
             </Button>
           </Form>
-          <p className="text-center text-muted mt-3 small">
-            ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
-          </p>
+
+          <hr className="my-4" />
+
+          <div className="text-center">
+            <p className="text-muted small mb-2">¿Eres paciente?</p>
+            <Button
+              variant="outline-success"
+              className="w-100"
+              onClick={() => navigate('/registro-paciente')}
+            >
+              Regístrate como paciente
+            </Button>
+          </div>
         </Card.Body>
       </Card>
     </Container>

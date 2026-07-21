@@ -8,6 +8,11 @@ export async function getPacientes(query: ListQuery = {}) {
   return data.data
 }
 
+export async function getPacienteByUsuario(userId: string) {
+  const { data } = await http.get<ApiResponse<Paciente>>(`/pacientes/usuario/${userId}`)
+  return data.data
+}
+
 export async function createPaciente(payload: CreatePacientePayload) {
   const { data } = await http.post<ApiResponse<Paciente>>('/pacientes', payload)
   return data.data
