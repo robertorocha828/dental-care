@@ -9,7 +9,7 @@ export default function DashboardLayout() {
       <Sidebar />
       <div className="d-flex flex-column flex-grow-1">
         <DashboardHeader />
-        <main className="flex-grow-1 p-4">
+        <main className="flex-grow-1 p-3 p-lg-4">
           <Outlet />
         </main>
         <DashboardFooter />
