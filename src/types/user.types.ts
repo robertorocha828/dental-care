@@ -4,12 +4,14 @@ export interface User {
   email: string
   rol: string
   activo: boolean
+  googleId?: string | null
+  avatarUrl?: string | null
 }
 
 export interface CreateUserPayload {
   username: string
   email: string
-  password: string
+  password?: string
   rol?: string
 }
 

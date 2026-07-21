@@ -17,6 +17,7 @@ const doctorMenuItems = [
 
 const pacienteMenuItems = [
   { label: 'Inicio', to: '/portal' },
+  { label: 'Agendar cita', to: '/agendar' },
   { label: 'Mi perfil', to: '/perfil' },
 ]
 

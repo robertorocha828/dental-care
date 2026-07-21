@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Container, Row, Col, Button, Card, Carousel } from 'react-bootstrap'
 import {
-  Smile, CalendarCheck, ShieldCheck, Sparkles, Award,
+  Smile, UserPlus, LogIn, ShieldCheck, Sparkles, Award,
   Stethoscope, Syringe, Activity, Baby,
 } from 'lucide-react'
 
@@ -92,12 +92,12 @@ export default function HomePage() {
           ))}
         </Carousel>
         <Container className="d-flex flex-wrap justify-content-center gap-3 py-4">
-          <Button size="lg" style={{ backgroundColor: TEAL, border: 'none' }} onClick={() => navigate('/agendar')}>
-            <CalendarCheck size={18} className="me-2" style={{ marginTop: -3 }} />
-            Agendar cita
+          <Button size="lg" style={{ backgroundColor: TEAL, border: 'none' }} onClick={() => navigate('/register')}>
+            <UserPlus size={18} className="me-2" style={{ marginTop: -3 }} />
+            Regístrate
           </Button>
-          <Button variant="outline-secondary" size="lg" onClick={() => navigate('/especialidades')}>
-            Ver especialidades
+          <Button variant="outline-secondary" size="lg" onClick={() => navigate('/login')}>
+            Ingresar
           </Button>
         </Container>
       </div>
@@ -192,11 +192,17 @@ export default function HomePage() {
       {/* CTA final */}
       <div className="py-5" style={{ background: DEGRADADO_OSCURO }}>
         <Container className="text-center">
-          <h3 className="fw-bold text-white mb-3">¿Listo para tu próxima cita?</h3>
-          <Button size="lg" style={{ backgroundColor: TEAL_CLARO, border: 'none', color: NAVY }} onClick={() => navigate('/agendar')}>
-            <CalendarCheck size={18} className="me-2" style={{ marginTop: -3 }} />
-            Agendar cita
-          </Button>
+          <h3 className="fw-bold text-white mb-3">¿Listo para cuidar tu sonrisa?</h3>
+          <div className="d-flex flex-wrap justify-content-center gap-3">
+            <Button size="lg" style={{ backgroundColor: TEAL_CLARO, border: 'none', color: NAVY }} onClick={() => navigate('/register')}>
+              <UserPlus size={18} className="me-2" style={{ marginTop: -3 }} />
+              Regístrate
+            </Button>
+            <Button variant="outline-light" size="lg" onClick={() => navigate('/login')}>
+              <LogIn size={18} className="me-2" style={{ marginTop: -3 }} />
+              Ingresar
+            </Button>
+          </div>
         </Container>
       </div>
     </>

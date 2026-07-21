@@ -27,7 +27,7 @@ export default function PublicFooter() {
             <ul className="list-unstyled small d-flex flex-column gap-1">
               <li><NavLink to="/" className="text-decoration-none text-white-50">Inicio</NavLink></li>
               <li><NavLink to="/especialidades" className="text-decoration-none text-white-50">Especialidades</NavLink></li>
-              <li><NavLink to="/agendar" className="text-decoration-none text-white-50">Agendar cita</NavLink></li>
+              <li><NavLink to="/register" className="text-decoration-none text-white-50">Regístrate</NavLink></li>
               <li><NavLink to="/login" className="text-decoration-none text-white-50">Ingresar</NavLink></li>
             </ul>
           </Col>
