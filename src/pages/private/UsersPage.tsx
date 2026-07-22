@@ -1,24 +1,36 @@
-import { useEffect, useState } from 'react'
-import { Container, Card, Table, Button, Badge } from 'react-bootstrap'
+import { useEffect, useMemo, useState } from 'react'
+import { Container, Card, Table, Button, Badge, Form } from 'react-bootstrap'
 import { getUsers, deleteUser } from '@/api/users.api'
+import { getRoles } from '@/api/roles.api'
 import type { User } from '@/types/user.types'
+import type { Rol } from '@/types/rol.types'
 import UserFormDialog from '@/components/private/UserFormDialog'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useToastStore } from '@/store/toast.store'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
+  const [roles, setRoles] = useState<Rol[]>([])
+  const [filtroRol, setFiltroRol] = useState('')
   const [editing, setEditing] = useState<User | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
   const showToast = useToastStore((s) => s.show)
 
   const load = async () => {
-    const result = await getUsers({ limit: 50 })
+    const result = await getUsers({ limit: 100 })
     setUsers(result.items)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    getRoles({ limit: 100 }).then((r) => setRoles(r.items))
+  }, [])
+
+  const usersFiltrados = useMemo(
+    () => (filtroRol ? users.filter((u) => u.rol === filtroRol) : users),
+    [users, filtroRol],
+  )
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -30,11 +42,25 @@ export default function UsersPage() {
 
   return (
     <Container>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h4 className="fw-bold mb-0">Usuarios</h4>
-        <Button variant="primary" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          Nuevo usuario
-        </Button>
+        <div className="d-flex gap-2 align-items-center">
+          <Form.Select
+            size="sm"
+            style={{ width: 180 }}
+            value={filtroRol}
+            onChange={(e) => setFiltroRol(e.target.value)}
+          >
+            <option value="">Todos los roles</option>
+            <option value="paciente">Paciente</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.nombre}>{r.nombre}</option>
+            ))}
+          </Form.Select>
+          <Button variant="primary" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            Nuevo usuario
+          </Button>
+        </div>
       </div>
 
       <Card className="border-0 shadow-sm">
@@ -50,14 +76,14 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.length === 0 && (
+              {usersFiltrados.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-center text-muted py-4">
-                    No hay usuarios registrados.
+                    No hay usuarios que coincidan.
                   </td>
                 </tr>
               )}
-              {users.map((user) => (
+              {usersFiltrados.map((user) => (
                 <tr key={user.id}>
                   <td className="ps-4">{user.username}</td>
                   <td>{user.email}</td>
