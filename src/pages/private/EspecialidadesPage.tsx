@@ -1,98 +1,104 @@
 import { useEffect, useState } from 'react'
-import { Container, Card, Table, Button, Badge } from 'react-bootstrap'
-import { getEspecialidades, deleteEspecialidad } from '@/api/especialidades.api'
+import { Container, Row, Col, Card, Spinner, Badge } from 'react-bootstrap'
+import { Smile, UserRound, ChevronDown, ChevronUp } from 'lucide-react'
+import { getEspecialidades, getEspecialidad } from '@/api/especialidades.api'
 import type { Especialidad } from '@/types/especialidad.types'
-import EspecialidadFormDialog from '@/components/private/EspecialidadFormDialog'
-import ConfirmDialog from '@/components/ConfirmDialog'
-import { useToastStore } from '@/store/toast.store'
+
+const NAVY = '#0a2540'
+const TEAL = '#1b8a9c'
 
 export default function EspecialidadesPage() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([])
-  const [editing, setEditing] = useState<Especialidad | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<Especialidad | null>(null)
-  const showToast = useToastStore((s) => s.show)
+  const [loading, setLoading] = useState(true)
+  const [abiertaId, setAbiertaId] = useState<number | null>(null)
+  const [detalle, setDetalle] = useState<Especialidad | null>(null)
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
 
-  const load = async () => {
-    setEspecialidades(await getEspecialidades())
-  }
+  useEffect(() => {
+    getEspecialidades()
+      .then((data) => setEspecialidades(data.filter((e) => e.activo)))
+      .finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { load() }, [])
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    await deleteEspecialidad(deleteTarget.id)
-    showToast('Especialidad eliminada')
-    setDeleteTarget(null)
-    load()
+  const toggleEspecialidad = async (esp: Especialidad) => {
+    if (abiertaId === esp.id) {
+      setAbiertaId(null)
+      return
+    }
+    setAbiertaId(esp.id)
+    setCargandoDetalle(true)
+    try {
+      setDetalle(await getEspecialidad(esp.id))
+    } finally {
+      setCargandoDetalle(false)
+    }
   }
 
   return (
-    <Container>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold mb-0">Especialidades</h4>
-        <Button variant="primary" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          Nueva especialidad
-        </Button>
+    <Container className="py-5">
+      <div className="text-center mb-5">
+        <p className="fw-semibold text-uppercase small mb-1" style={{ color: TEAL, letterSpacing: 2 }}>
+          Dental Care
+        </p>
+        <h2 className="fw-bold" style={{ color: NAVY }}>Nuestras especialidades</h2>
+        <p className="text-muted small">Toca una especialidad para ver a los odontólogos que la atienden.</p>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <Card.Body className="p-0">
-          <Table hover responsive className="mb-0">
-            <thead>
-              <tr>
-                <th className="ps-4">Nombre</th>
-                <th>Estado</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {especialidades.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="text-center text-muted py-4">
-                    No hay especialidades registradas.
-                  </td>
-                </tr>
-              )}
-              {especialidades.map((e) => (
-                <tr key={e.id}>
-                  <td className="ps-4">{e.nombre}</td>
-                  <td>
-                    <Badge bg={e.activo ? 'success' : 'secondary'}>{e.activo ? 'Activa' : 'Inactiva'}</Badge>
-                  </td>
-                  <td className="text-end pe-4">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => { setEditing(e); setDialogOpen(true) }}
-                    >
-                      Editar
-                    </Button>
-                    <Button variant="outline-danger" size="sm" onClick={() => setDeleteTarget(e)}>
-                      Eliminar
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+      {loading && (
+        <div className="text-center py-5">
+          <Spinner animation="border" style={{ color: TEAL }} />
+        </div>
+      )}
 
-      <EspecialidadFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        especialidad={editing}
-        onSaved={load}
-      />
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Eliminar especialidad"
-        description={`¿Seguro que quieres eliminar "${deleteTarget?.nombre}"? Esta acción no se puede deshacer.`}
-        onConfirm={handleDelete}
-      />
+      {!loading && especialidades.length === 0 && (
+        <p className="text-center text-muted">Aún no hay especialidades registradas.</p>
+      )}
+
+      <Row className="g-4">
+        {especialidades.map((esp) => (
+          <Col key={esp.id} xs={12} sm={6} lg={4}>
+            <Card
+              className="h-100 border-0 shadow-sm"
+              role="button"
+              onClick={() => toggleEspecialidad(esp)}
+              style={{ cursor: 'pointer' }}
+            >
+              <Card.Body className="p-4">
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                    style={{ width: 48, height: 48, backgroundColor: '#e6f4f6' }}
+                  >
+                    <Smile size={22} style={{ color: TEAL }} />
+                  </div>
+                  <Card.Title className="fw-bold mb-0 flex-grow-1" style={{ color: NAVY }}>{esp.nombre}</Card.Title>
+                  {abiertaId === esp.id ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
+                </div>
+
+                {abiertaId === esp.id && (
+                  <div className="mt-3 pt-3 border-top">
+                    {cargandoDetalle && <Spinner animation="border" size="sm" style={{ color: TEAL }} />}
+                    {!cargandoDetalle && detalle && (detalle.odontologos?.length ?? 0) === 0 && (
+                      <p className="text-muted small mb-0">Todavía no hay odontólogos asignados a esta especialidad.</p>
+                    )}
+                    {!cargandoDetalle && detalle?.odontologos?.map((doc) => (
+                      <Badge
+                        key={doc.id}
+                        bg="light"
+                        text="dark"
+                        className="d-flex align-items-center gap-1 mb-2 p-2 border"
+                      >
+                        <UserRound size={14} style={{ color: TEAL }} />
+                        {doc.nombre} {doc.apellido}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
     </Container>
   )
 }

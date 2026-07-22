@@ -61,7 +61,7 @@ export default function OdontologosPage() {
               {odontologos.map((o) => (
                 <tr key={o.id}>
                   <td className="ps-4">{o.nombre} {o.apellido}</td>
-                  <td>{o.especialidad}</td>
+                  <td>{o.especialidadRel?.nombre ?? <span className="text-muted">Sin asignar</span>}</td>
                   <td>{o.numeroRegistro}</td>
                   <td>
                     <Badge bg={o.userId ? 'success' : 'secondary'}>

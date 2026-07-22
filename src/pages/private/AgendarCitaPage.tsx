@@ -86,7 +86,7 @@ export default function AgendarCitaPage() {
               <Form.Select {...register('odontologoId')} isInvalid={!!errors.odontologoId} defaultValue="">
                 <option value="" disabled>Selecciona un odontólogo</option>
                 {odontologos.map((o) => (
-                  <option key={o.id} value={o.id}>{o.nombre} {o.apellido} — {o.especialidad}</option>
+                  <option key={o.id} value={o.id}>{o.nombre} {o.apellido}{o.especialidadRel ? ` — ${o.especialidadRel.nombre}` : ''}</option>
                 ))}
               </Form.Select>
               {errors.odontologoId && (

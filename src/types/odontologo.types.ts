@@ -5,7 +5,8 @@ export interface Odontologo {
   apellido: string
   telefono: string
   email?: string
-  especialidad: string
+  especialidadId?: number
+  especialidadRel?: { id: number; nombre: string }
   numeroRegistro: string
   estado: 'activo' | 'inactivo'
   userId?: string
@@ -17,7 +18,7 @@ export interface CreateOdontologoPayload {
   apellido: string
   telefono: string
   email?: string
-  especialidad: string
+  especialidadId?: number
   numeroRegistro: string
   userId?: string
 }

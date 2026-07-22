@@ -9,6 +9,11 @@ export async function getEspecialidades() {
   return data
 }
 
+export async function getEspecialidad(id: number) {
+  const { data } = await http.get<Especialidad>(`/especialidades/${id}`)
+  return data
+}
+
 export async function createEspecialidad(payload: CreateEspecialidadPayload) {
   const { data } = await http.post<Especialidad>('/especialidades', payload)
   return data
