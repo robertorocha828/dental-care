@@ -17,3 +17,13 @@ export async function getCitasByPaciente(pacienteId: string, query: ListQuery = 
   const { data } = await http.get<ApiResponse<Paginated<Cita>>>(`/citas/paciente/${pacienteId}`, { params: query })
   return data.data
 }
+
+export async function getCitasByOdontologo(odontologoId: string, query: ListQuery = { limit: 50 }) {
+  const { data } = await http.get<ApiResponse<Paginated<Cita>>>(`/citas/odontologo/${odontologoId}`, { params: query })
+  return data.data
+}
+
+export async function updateCita(id: string, payload: Partial<Cita>) {
+  const { data } = await http.put<ApiResponse<Cita>>(`/citas/${id}`, payload)
+  return data.data
+}
