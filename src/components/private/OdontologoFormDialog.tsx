@@ -5,9 +5,11 @@ import { z } from 'zod'
 import { Modal, Button, Form, Alert } from 'react-bootstrap'
 import { createOdontologo, updateOdontologo } from '@/api/odontologos.api'
 import { getUsers } from '@/api/users.api'
+import { getEspecialidades } from '@/api/especialidades.api'
 import { useToastStore } from '@/store/toast.store'
 import type { Odontologo } from '@/types/odontologo.types'
 import type { User } from '@/types/user.types'
+import type { Especialidad } from '@/types/especialidad.types'
 
 const schema = z.object({
   nombre:         z.string().min(1, 'Requerido'),
@@ -15,7 +17,7 @@ const schema = z.object({
   cedula:         z.string().min(1, 'Requerido'),
   telefono:       z.string().min(1, 'Requerido'),
   email:          z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
-  especialidad:   z.string().min(1, 'Requerido'),
+  especialidadId: z.string().min(1, 'Selecciona una especialidad'),
   numeroRegistro: z.string().min(1, 'Requerido'),
   userId:         z.string().optional(),
 })
@@ -31,6 +33,7 @@ interface Props {
 export default function OdontologoFormDialog({ open, onOpenChange, odontologo, onSaved }: Props) {
   const showToast = useToastStore((s) => s.show)
   const [usuariosDoctor, setUsuariosDoctor] = useState<User[]>([])
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([])
   const {
     register,
     handleSubmit,
@@ -41,20 +44,25 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
   useEffect(() => {
     if (!open) return
     getUsers({ limit: 100 }).then((r) => setUsuariosDoctor(r.items.filter((u) => u.rol === 'doctor')))
+    getEspecialidades().then((data) => setEspecialidades(data.filter((e) => e.activo)))
     reset({
       nombre:         odontologo?.nombre ?? '',
       apellido:       odontologo?.apellido ?? '',
       cedula:         odontologo?.cedula ?? '',
       telefono:       odontologo?.telefono ?? '',
       email:          odontologo?.email ?? '',
-      especialidad:   odontologo?.especialidad ?? '',
+      especialidadId: odontologo?.especialidadId ? String(odontologo.especialidadId) : '',
       numeroRegistro: odontologo?.numeroRegistro ?? '',
       userId:         odontologo?.userId ?? '',
     })
   }, [odontologo, open, reset])
 
   const onSubmit = async (values: FormValues) => {
-    const payload = { ...values, userId: values.userId || undefined }
+    const payload = {
+      ...values,
+      especialidadId: Number(values.especialidadId),
+      userId: values.userId || undefined,
+    }
     if (odontologo) {
       await updateOdontologo(odontologo.id, payload)
       showToast('Odontólogo actualizado')
@@ -100,8 +108,20 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Especialidad</Form.Label>
-            <Form.Control {...register('especialidad')} isInvalid={!!errors.especialidad} />
-            {errors.especialidad && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.especialidad.message}</Alert>}
+            <Form.Select {...register('especialidadId')} isInvalid={!!errors.especialidadId} defaultValue="">
+              <option value="" disabled>Selecciona una especialidad</option>
+              {especialidades.map((e) => (
+                <option key={e.id} value={e.id}>{e.nombre}</option>
+              ))}
+            </Form.Select>
+            {errors.especialidadId && (
+              <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.especialidadId.message}</Alert>
+            )}
+            {especialidades.length === 0 && (
+              <Form.Text className="text-muted">
+                No hay especialidades activas todavía. Créalas primero en el módulo de Especialidades.
+              </Form.Text>
+            )}
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Número de registro</Form.Label>
