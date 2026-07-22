@@ -24,6 +24,7 @@ export default function AgendarCitaPage() {
   const [pacienteId, setPacienteId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [faltaPerfil, setFaltaPerfil] = useState(false)
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormValues>({ resolver: zodResolver(schema) })
 
@@ -32,7 +33,7 @@ export default function AgendarCitaPage() {
     if (userId) {
       getPacienteByUsuario(userId)
         .then((p) => { setPacienteId(p.id); setEmail(p.email ?? null) })
-        .catch(() => setErrorMsg('No se encontró tu ficha de paciente.'))
+        .catch(() => setFaltaPerfil(true))
     }
   }, [userId])
 
@@ -51,6 +52,23 @@ export default function AgendarCitaPage() {
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message ?? 'No se pudo agendar la cita. Intenta de nuevo.')
     }
+  }
+
+  if (faltaPerfil) {
+    return (
+      <Container className="py-4 d-flex justify-content-center">
+        <Card className="shadow-sm border-0 w-100" style={{ maxWidth: 480 }}>
+          <Card.Body className="p-4">
+            <Alert variant="warning" className="mb-3">
+              Nos faltan algunos datos tuyos antes de poder agendar una cita.
+            </Alert>
+            <Button className="w-100" onClick={() => navigate('/completar-perfil')}>
+              Completar perfil
+            </Button>
+          </Card.Body>
+        </Card>
+      </Container>
+    )
   }
 
   return (
