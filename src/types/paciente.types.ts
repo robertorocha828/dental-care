@@ -7,6 +7,7 @@ export interface Paciente {
   genero: 'masculino' | 'femenino' | 'otro'
   telefono: string
   email?: string
+  userId?: string
   alergias?: string[]
   estado: 'activo' | 'inactivo'
 }
@@ -19,5 +20,6 @@ export interface CreatePacientePayload {
   genero: 'masculino' | 'femenino' | 'otro'
   telefono: string
   email?: string
+  userId?: string
   alergias?: string[]
 }
