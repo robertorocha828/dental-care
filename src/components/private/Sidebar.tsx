@@ -6,11 +6,14 @@ import { useSidebarStore } from '@/store/sidebar.store'
 const adminMenuItems = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Pacientes', to: '/pacientes' },
+  { label: 'Odontólogos', to: '/odontologos' },
+  { label: 'Especialidades', to: '/admin/especialidades' },
   { label: 'Usuarios', to: '/usuarios' },
   { label: 'Mi perfil', to: '/perfil' },
 ]
 
 const doctorMenuItems = [
+  { label: 'Inicio', to: '/dashboard' },
   { label: 'Historial clínico', to: '/historial-clinico' },
   { label: 'Mi perfil', to: '/perfil' },
 ]
