@@ -10,12 +10,19 @@ const adminMenuItems = [
   { label: 'Especialidades', to: '/admin/especialidades' },
   { label: 'Usuarios', to: '/usuarios' },
   { label: 'Mi perfil', to: '/perfil' },
+  { label: 'Tipos de tratamiento', to: '/admin/tipos-tratamiento' },
+  { label: 'Tratamientos', to: '/admin/tratamientos' },
+  { label: 'Inventario', to: '/admin/inventario' },
+  { label: 'Recetas', to: '/recetas' },
+  { label: 'Horarios', to: '/admin/horarios' },
+  { label: 'Notificaciones', to: '/admin/notificaciones' },
 ]
 
 const doctorMenuItems = [
   { label: 'Inicio', to: '/dashboard' },
   { label: 'Historial clínico', to: '/historial-clinico' },
   { label: 'Mi perfil', to: '/perfil' },
+  { label: 'Recetas', to: '/recetas' },
 ]
 
 const pacienteMenuItems = [
