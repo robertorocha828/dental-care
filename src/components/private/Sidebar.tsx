@@ -82,7 +82,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Escritorio: barra lateral fija, siempre visible */}
       <div
         className="d-none d-lg-flex flex-column bg-dark text-white p-3"
         style={{ width: 220, minHeight: '100vh' }}
@@ -90,7 +89,6 @@ export default function Sidebar() {
         <MenuContent menuItems={menuItems} onNavigate={() => {}} onLogout={handleLogout} />
       </div>
 
-      {/* Móvil/tablet: panel deslizante, se abre desde el botón de hamburguesa del header */}
       <Offcanvas show={open} onHide={close} className="bg-dark text-white d-lg-none" style={{ width: 240 }}>
         <Offcanvas.Header closeButton closeVariant="white">
           <Offcanvas.Title>Panel</Offcanvas.Title>
