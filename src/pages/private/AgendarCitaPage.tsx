@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useMemo, useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
@@ -7,35 +7,78 @@ import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { getPacienteByUsuario } from '@/api/pacientes.api'
 import { getOdontologos } from '@/api/odontologos.api'
 import { agendarCita } from '@/api/citas.api'
+import { getHorarios } from '@/api/horarios.api'
 import { useAuthStore } from '@/store/auth.store'
 import type { Odontologo } from '@/types/odontologo.types'
+import type { Horario, DiaSemana } from '@/types/horario.types'
 
 const schema = z.object({
-  odontologoId:  z.string().min(1, 'Selecciona un odontólogo'),
-  fechaHoraCita: z.string().min(1, 'Requerido'),
-  motivo:        z.string().min(1, 'Requerido'),
+  odontologoId: z.string().min(1, 'Selecciona un odontólogo'),
+  fecha:        z.string().min(1, 'Selecciona una fecha'),
+  hora:         z.string().min(1, 'Selecciona una hora'),
+  motivo:       z.string().min(1, 'Requerido'),
 })
 type FormValues = z.infer<typeof schema>
+
+const DIAS_JS_ORDER: DiaSemana[] = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+
+function diaSemanaDeFecha(fecha: string): DiaSemana {
+  const [y, m, d] = fecha.split('-').map(Number)
+  const dateObj = new Date(y, m - 1, d)
+  return DIAS_JS_ORDER[dateObj.getDay()]
+}
+
+function generarSlots(horarios: Horario[], dia: DiaSemana, intervaloMin = 30): string[] {
+  const delDia = horarios.filter((h) => h.dia === dia)
+  const slots: string[] = []
+  delDia.forEach((h) => {
+    let [hh, mm] = h.horaInicio.slice(0, 5).split(':').map(Number)
+    const [endH, endM] = h.horaFin.slice(0, 5).split(':').map(Number)
+    while (hh < endH || (hh === endH && mm < endM)) {
+      slots.push(`${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`)
+      mm += intervaloMin
+      if (mm >= 60) { mm -= 60; hh += 1 }
+    }
+  })
+  return slots.sort()
+}
+
+function hoyISO() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
 
 export default function AgendarCitaPage() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const [odontologos, setOdontologos] = useState<Odontologo[]>([])
+  const [horarios, setHorarios] = useState<Horario[]>([])
   const [pacienteId, setPacienteId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
-  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } =
     useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const fechaSeleccionada = watch('fecha')
 
   useEffect(() => {
     getOdontologos({ limit: 100 }).then((r) => setOdontologos(r.items))
+    getHorarios({ limit: 100 }).then((r) => setHorarios(r.items))
     if (userId) {
       getPacienteByUsuario(userId)
         .then((p) => { setPacienteId(p.id); setEmail(p.email ?? null) })
         .catch(() => setFaltaPerfil(true))
     }
   }, [userId])
+
+  const slotsDisponibles = useMemo(() => {
+    if (!fechaSeleccionada) return []
+    const dia = diaSemanaDeFecha(fechaSeleccionada)
+    return generarSlots(horarios, dia)
+  }, [fechaSeleccionada, horarios])
+
+  const sinAtencionEseDia = !!fechaSeleccionada && slotsDisponibles.length === 0
 
   const onSubmit = async (values: FormValues) => {
     if (!pacienteId) return
@@ -45,7 +88,7 @@ export default function AgendarCitaPage() {
         pacienteId,
         odontologoId: values.odontologoId,
         emailPaciente: email ?? '',
-        fechaHora: values.fechaHoraCita,
+        fechaHora: `${values.fecha}T${values.hora}:00`,
         motivo: values.motivo,
       })
       navigate('/portal')
@@ -93,13 +136,41 @@ export default function AgendarCitaPage() {
                 <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.odontologoId.message}</Alert>
               )}
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Fecha y hora</Form.Label>
-              <Form.Control type="datetime-local" {...register('fechaHoraCita')} isInvalid={!!errors.fechaHoraCita} />
-              {errors.fechaHoraCita && (
-                <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.fechaHoraCita.message}</Alert>
+              <Form.Label>Fecha</Form.Label>
+              <Controller
+                name="fecha"
+                control={control}
+                render={({ field }) => (
+                  <Form.Control type="date" min={hoyISO()} isInvalid={!!errors.fecha} {...field} />
+                )}
+              />
+              {errors.fecha && (
+                <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.fecha.message}</Alert>
+              )}
+              {sinAtencionEseDia && (
+                <Form.Text className="text-danger">
+                  No hay horario de atención configurado para ese día. Elige otra fecha.
+                </Form.Text>
               )}
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Hora</Form.Label>
+              <Form.Select {...register('hora')} isInvalid={!!errors.hora} disabled={slotsDisponibles.length === 0} defaultValue="">
+                <option value="" disabled>
+                  {fechaSeleccionada ? 'Selecciona una hora' : 'Primero elige una fecha'}
+                </option>
+                {slotsDisponibles.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </Form.Select>
+              {errors.hora && (
+                <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.hora.message}</Alert>
+              )}
+            </Form.Group>
+
             <Form.Group className="mb-4">
               <Form.Label>Motivo de la consulta</Form.Label>
               <Form.Control as="textarea" rows={2} {...register('motivo')} isInvalid={!!errors.motivo} />
