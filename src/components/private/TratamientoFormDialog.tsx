@@ -16,7 +16,8 @@ const schema = z.object({
   tipoTratamientoId: z.string().min(1, 'Selecciona un tipo'),
   activo:            z.boolean(),
 })
-type FormValues = z.infer<typeof schema>
+type FormValues = z.input<typeof schema>
+type FormOutput = z.output<typeof schema>
 
 interface Props {
   open: boolean
@@ -33,7 +34,7 @@ export default function TratamientoFormDialog({ open, onOpenChange, tratamiento,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues, any, FormOutput>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
     if (!open) return
@@ -47,7 +48,7 @@ export default function TratamientoFormDialog({ open, onOpenChange, tratamiento,
     })
   }, [tratamiento, open, reset])
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: FormOutput) => {
     const payload = { ...values, tipoTratamientoId: Number(values.tipoTratamientoId) }
     if (tratamiento) {
       await updateTratamiento(tratamiento.id, payload)
