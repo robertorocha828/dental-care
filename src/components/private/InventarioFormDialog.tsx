@@ -15,7 +15,8 @@ const schema = z.object({
   precioUnitario: z.coerce.number().min(0, 'Debe ser mayor o igual a 0'),
   activo:         z.boolean(),
 })
-type FormValues = z.infer<typeof schema>
+type FormValues = z.input<typeof schema>
+type FormOutput = z.output<typeof schema>
 
 interface Props {
   open: boolean
@@ -31,7 +32,7 @@ export default function InventarioFormDialog({ open, onOpenChange, item, onSaved
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues, any, FormOutput>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
     reset({
@@ -44,7 +45,7 @@ export default function InventarioFormDialog({ open, onOpenChange, item, onSaved
     })
   }, [item, open, reset])
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: FormOutput) => {
     if (item) {
       await updateItemInventario(item.id, values)
       showToast('Ítem actualizado')
