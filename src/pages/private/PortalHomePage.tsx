@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Container, Card, Table, Badge, Alert, Button, Row, Col } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { getPacienteByUsuario } from '@/api/pacientes.api'
 import { getCitasByPaciente } from '@/api/citas.api'
+import { getOdontologos } from '@/api/odontologos.api'
 import { Chart as ChartJS, ArcElement, Tooltip as ChartJsTooltip, Legend } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
 import type { Cita } from '@/types/cita.types'
+import type { Odontologo } from '@/types/odontologo.types'
 
 ChartJS.register(ArcElement, ChartJsTooltip, Legend)
 
@@ -26,6 +28,7 @@ export default function PortalHomePage() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
   const [citas, setCitas] = useState<Cita[]>([])
+  const [odontologos, setOdontologos] = useState<Odontologo[]>([])
   const [loading, setLoading] = useState(true)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
 
@@ -34,8 +37,12 @@ export default function PortalHomePage() {
       if (!userId) return
       try {
         const paciente = await getPacienteByUsuario(userId)
-        const result = await getCitasByPaciente(paciente.id)
+        const [result, odontologosResult] = await Promise.all([
+          getCitasByPaciente(paciente.id),
+          getOdontologos({ limit: 100 }),
+        ])
         setCitas(result.items)
+        setOdontologos(odontologosResult.items)
       } catch {
         setFaltaPerfil(true)
       } finally {
@@ -44,6 +51,21 @@ export default function PortalHomePage() {
     }
     load()
   }, [userId])
+
+  const nombreDoctor = (id?: string) => {
+    if (!id) return null
+    const o = odontologos.find((x) => x.id === id)
+    return o ? `${o.nombre} ${o.apellido}` : null
+  }
+
+  const proximasCitas = useMemo(() => {
+    const ahora = Date.now()
+    return citas
+      .filter((c) => c.estado === 'agendada' && new Date(c.fechaHora).getTime() >= ahora)
+      .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())
+  }, [citas])
+
+  const proximaCita = proximasCitas[0] ?? null
 
   if (!loading && faltaPerfil) {
     return (
@@ -79,6 +101,36 @@ export default function PortalHomePage() {
         </Button>
       </div>
 
+      {!loading && (
+        <Card className={`border-0 shadow-sm mb-4 ${proximaCita ? 'bg-primary bg-opacity-10' : ''}`}>
+          <Card.Body className="p-4">
+            <Card.Title className="fw-bold small text-uppercase text-muted mb-2">
+              Tu próxima cita
+            </Card.Title>
+            {proximaCita ? (
+              <>
+                <div className="fs-4 fw-bold text-primary mb-1">
+                  {new Date(proximaCita.fechaHora).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {' — '}
+                  {new Date(proximaCita.fechaHora).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <p className="text-muted mb-0">
+                  {proximaCita.motivo}
+                  {nombreDoctor(proximaCita.odontologoId) && ` — con ${nombreDoctor(proximaCita.odontologoId)}`}
+                </p>
+                {proximasCitas.length > 1 && (
+                  <p className="text-muted small mt-2 mb-0">
+                    Tienes {proximasCitas.length - 1} cita{proximasCitas.length - 1 === 1 ? '' : 's'} más agendada{proximasCitas.length - 1 === 1 ? '' : 's'} después de esta.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-muted mb-0">No tienes citas próximas agendadas.</p>
+            )}
+          </Card.Body>
+        </Card>
+      )}
+
       <Row className="g-3 mb-4">
         <Col xs={12} md={4}>
           <Card className="h-100 border-0 shadow-sm">
@@ -108,10 +160,14 @@ export default function PortalHomePage() {
 
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-0">
+          <Card.Title className="fw-bold small text-uppercase text-muted p-4 pb-0 mb-2">
+            Historial de citas
+          </Card.Title>
           <Table hover responsive className="mb-0">
             <thead>
               <tr>
                 <th className="ps-4">Fecha y hora</th>
+                <th>Doctor</th>
                 <th>Motivo</th>
                 <th>Estado</th>
               </tr>
@@ -119,7 +175,7 @@ export default function PortalHomePage() {
             <tbody>
               {!loading && citas.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="text-center text-muted py-4">
+                  <td colSpan={4} className="text-center text-muted py-4">
                     Todavía no tienes citas agendadas.
                   </td>
                 </tr>
@@ -127,6 +183,7 @@ export default function PortalHomePage() {
               {citas.map((cita) => (
                 <tr key={cita.id}>
                   <td className="ps-4">{new Date(cita.fechaHora).toLocaleString('es-EC')}</td>
+                  <td>{nombreDoctor(cita.odontologoId) ?? '—'}</td>
                   <td>{cita.motivo}</td>
                   <td>
                     <Badge bg={estadoBadge[cita.estado]}>{cita.estado}</Badge>
