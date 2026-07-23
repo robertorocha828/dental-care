@@ -10,6 +10,11 @@ import HistorialClinicoPage from '@/pages/private/HistorialClinicoPage'
 import OdontologosPage from '@/pages/private/OdontologosPage'
 import EspecialidadesPage from '@/pages/private/EspecialidadesPage'
 import TiposTratamientoPage from '@/pages/private/TiposTratamientoPage'
+import TratamientosPage from '@/pages/private/TratamientosPage'
+import InventarioPage from '@/pages/private/InventarioPage'
+import RecetasPage from '@/pages/private/RecetasPage'
+import HorariosPage from '@/pages/private/HorariosPage'
+import NotificacionesPage from '@/pages/private/NotificacionesPage'
 
 export const privateRoutes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardHomePage />} />,
@@ -23,4 +28,9 @@ export const privateRoutes = [
   <Route key="completar-perfil" path="/completar-perfil" element={<CompletarPerfilPage />} />,
   <Route key="historial-clinico" path="/historial-clinico" element={<HistorialClinicoPage />} />,
   <Route key="tipos-tratamiento" path="/admin/tipos-tratamiento" element={<TiposTratamientoPage />} />,
+  <Route key="tratamientos" path="/admin/tratamientos" element={<TratamientosPage />} />,
+  <Route key="inventario" path="/admin/inventario" element={<InventarioPage />} />,
+  <Route key="recetas" path="/recetas" element={<RecetasPage />} />,
+  <Route key="horarios" path="/admin/horarios" element={<HorariosPage />} />,
+  <Route key="notificaciones" path="/admin/notificaciones" element={<NotificacionesPage />} />,
 ]
