@@ -10,6 +10,7 @@ const adminMenuItems = [
   { label: 'Especialidades', to: '/admin/especialidades' },
   { label: 'Usuarios', to: '/usuarios' },
   { label: 'Mi perfil', to: '/perfil' },
+  { label: 'Tipos de tratamiento', to: '/admin/tipos-tratamiento' },
 ]
 
 const doctorMenuItems = [

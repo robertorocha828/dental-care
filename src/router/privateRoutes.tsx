@@ -9,6 +9,7 @@ import CompletarPerfilPage from '@/pages/private/CompletarPerfilPage'
 import HistorialClinicoPage from '@/pages/private/HistorialClinicoPage'
 import OdontologosPage from '@/pages/private/OdontologosPage'
 import EspecialidadesPage from '@/pages/private/EspecialidadesPage'
+import TiposTratamientoPage from '@/pages/private/TiposTratamientoPage'
 
 export const privateRoutes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardHomePage />} />,
@@ -21,4 +22,5 @@ export const privateRoutes = [
   <Route key="agendar"   path="/agendar"   element={<AgendarCitaPage />} />,
   <Route key="completar-perfil" path="/completar-perfil" element={<CompletarPerfilPage />} />,
   <Route key="historial-clinico" path="/historial-clinico" element={<HistorialClinicoPage />} />,
+  <Route key="tipos-tratamiento" path="/admin/tipos-tratamiento" element={<TiposTratamientoPage />} />,
 ]
