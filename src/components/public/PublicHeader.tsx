@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Navbar, Container, Nav, Button } from 'react-bootstrap'
-import { Smile, Phone, CalendarCheck } from 'lucide-react'
+import { Smile, Phone, UserPlus } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 
 const NAVY = '#0a2540'
@@ -37,18 +37,20 @@ export default function PublicHeader() {
             <Nav className="ms-auto gap-1 align-items-center">
               <Nav.Link as={NavLink} to="/" end>Inicio</Nav.Link>
               <Nav.Link as={NavLink} to="/especialidades">Especialidades</Nav.Link>
-              <Nav.Link as={NavLink} to="/agendar">
-                <Button size="sm" style={{ backgroundColor: TEAL, border: 'none' }} className="d-flex align-items-center gap-1">
-                  <CalendarCheck size={16} />
-                  Agendar cita
-                </Button>
-              </Nav.Link>
               {isAuthenticated ? (
                 <Nav.Link as={NavLink} to="/dashboard">
                   <Button variant="outline-light" size="sm">Dashboard</Button>
                 </Nav.Link>
               ) : (
-                <Nav.Link as={NavLink} to="/login">Ingresar</Nav.Link>
+                <>
+                  <Nav.Link as={NavLink} to="/register">
+                    <Button size="sm" style={{ backgroundColor: TEAL, border: 'none' }} className="d-flex align-items-center gap-1">
+                      <UserPlus size={16} />
+                      Regístrate
+                    </Button>
+                  </Nav.Link>
+                  <Nav.Link as={NavLink} to="/login">Ingresar</Nav.Link>
+                </>
               )}
             </Nav>
           </Navbar.Collapse>
