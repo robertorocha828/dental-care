@@ -16,9 +16,8 @@ import { Pie } from 'react-chartjs-2'
 ChartJS.register(ArcElement, ChartJsTooltip, Legend)
 
 const CARDS = [
-  { titulo: 'Pacientes', descripcion: 'Gestiona el registro de pacientes del consultorio.' },
-  { titulo: 'Citas', descripcion: 'Administra las citas y agenda del consultorio.' },
-  { titulo: 'Odontólogos', descripcion: 'Gestiona el equipo de profesionales.' },
+  { titulo: 'Pacientes', descripcion: 'Gestiona el registro de pacientes del consultorio.', to: '/pacientes' },
+  { titulo: 'Odontólogos', descripcion: 'Gestiona el equipo de profesionales.', to: '/odontologos' },
 ]
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -37,6 +36,7 @@ function contarPorEstado(citas: { estado: string }[]) {
 
 // --- Dashboard del ADMIN: panorama general del consultorio ---
 function AdminDashboard({ userId }: { userId: string | null }) {
+  const navigate = useNavigate()
   const [citasPorEstado, setCitasPorEstado] = useState<{ estado: string; total: number }[]>([])
   const [usuariosPorRol, setUsuariosPorRol] = useState<{ rol: string; total: number }[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,11 +71,18 @@ function AdminDashboard({ userId }: { userId: string | null }) {
 
       <Row className="g-3 mb-4">
         {CARDS.map((card) => (
-          <Col key={card.titulo} xs={12} md={4}>
-            <Card className="h-100 border-0 shadow-sm">
+          <Col key={card.titulo} xs={12} md={6}>
+            <Card
+              className="h-100 border-0 shadow-sm"
+              role="button"
+              onClick={() => navigate(card.to)}
+              style={{ cursor: 'pointer', transition: 'transform 0.15s ease' }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+            >
               <Card.Body className="p-4">
                 <Card.Title className="fw-bold">{card.titulo}</Card.Title>
-                <Card.Text className="text-muted small">{card.descripcion}</Card.Text>
+                <Card.Text className="text-muted small mb-0">{card.descripcion}</Card.Text>
               </Card.Body>
             </Card>
           </Col>

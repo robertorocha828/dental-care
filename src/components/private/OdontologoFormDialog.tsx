@@ -3,8 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal, Button, Form, Alert } from 'react-bootstrap'
-import { createOdontologo, updateOdontologo } from '@/api/odontologos.api'
-import { getUsers } from '@/api/users.api'
+import { createOdontologo, updateOdontologo, getUsuariosDisponiblesOdontologo } from '@/api/odontologos.api'
 import { getEspecialidades } from '@/api/especialidades.api'
 import { useToastStore } from '@/store/toast.store'
 import type { Odontologo } from '@/types/odontologo.types'
@@ -12,14 +11,19 @@ import type { User } from '@/types/user.types'
 import type { Especialidad } from '@/types/especialidad.types'
 
 const schema = z.object({
-  nombre:         z.string().min(1, 'Requerido'),
-  apellido:       z.string().min(1, 'Requerido'),
-  cedula:         z.string().min(1, 'Requerido'),
-  telefono:       z.string().min(1, 'Requerido'),
-  email:          z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
+  _isCreate: z.boolean(),
+  userId: z.string().optional(),
+  nombre: z.string().min(1, 'Requerido'),
+  apellido: z.string().min(1, 'Requerido'),
+  cedula: z.string().min(1, 'Requerido'),
+  telefono: z.string().min(1, 'Requerido'),
+  email: z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
   especialidadId: z.string().min(1, 'Selecciona una especialidad'),
   numeroRegistro: z.string().min(1, 'Requerido'),
-  userId:         z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data._isCreate && !data.userId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecciona una cuenta de usuario', path: ['userId'] })
+  }
 })
 type FormValues = z.infer<typeof schema>
 
@@ -30,22 +34,35 @@ interface Props {
   onSaved: () => void
 }
 
+function splitUsername(username: string) {
+  const partes = username.trim().split(/\s+/)
+  return { nombre: partes[0] ?? '', apellido: partes.slice(1).join(' ') }
+}
+
 export default function OdontologoFormDialog({ open, onOpenChange, odontologo, onSaved }: Props) {
   const showToast = useToastStore((s) => s.show)
-  const [usuariosDoctor, setUsuariosDoctor] = useState<User[]>([])
+  const [usuariosDisponibles, setUsuariosDisponibles] = useState<User[]>([])
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([])
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  const userIdSeleccionado = watch('userId')
+
   useEffect(() => {
     if (!open) return
-    getUsers({ limit: 100 }).then((r) => setUsuariosDoctor(r.items.filter((u) => u.rol === 'doctor')))
     getEspecialidades().then((data) => setEspecialidades(data.filter((e) => e.activo)))
+    if (!odontologo) {
+      getUsuariosDisponiblesOdontologo().then(setUsuariosDisponibles)
+    }
     reset({
+      _isCreate:      !odontologo,
+      userId:         odontologo?.userId ?? '',
       nombre:         odontologo?.nombre ?? '',
       apellido:       odontologo?.apellido ?? '',
       cedula:         odontologo?.cedula ?? '',
@@ -53,15 +70,30 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
       email:          odontologo?.email ?? '',
       especialidadId: odontologo?.especialidadId ? String(odontologo.especialidadId) : '',
       numeroRegistro: odontologo?.numeroRegistro ?? '',
-      userId:         odontologo?.userId ?? '',
     })
   }, [odontologo, open, reset])
 
+  const handleSeleccionarUsuario = (userId: string) => {
+    setValue('userId', userId)
+    const usuario = usuariosDisponibles.find((u) => u.id === userId)
+    if (usuario) {
+      const { nombre, apellido } = splitUsername(usuario.username)
+      setValue('nombre', nombre)
+      setValue('apellido', apellido)
+      setValue('email', usuario.email)
+    }
+  }
+
   const onSubmit = async (values: FormValues) => {
     const payload = {
-      ...values,
+      nombre: values.nombre,
+      apellido: values.apellido,
+      cedula: values.cedula,
+      telefono: values.telefono,
+      email: values.email || undefined,
       especialidadId: Number(values.especialidadId),
       userId: values.userId || undefined,
+      numeroRegistro: values.numeroRegistro,
     }
     if (odontologo) {
       await updateOdontologo(odontologo.id, payload)
@@ -74,6 +106,8 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
     onSaved()
   }
 
+  const usuarioElegido = usuariosDisponibles.find((u) => u.id === userIdSeleccionado)
+
   return (
     <Modal show={open} onHide={() => onOpenChange(false)} centered>
       <Modal.Header closeButton>
@@ -81,6 +115,36 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
       </Modal.Header>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Modal.Body>
+          {!odontologo && (
+            <Form.Group className="mb-3">
+              <Form.Label>Cuenta de usuario</Form.Label>
+              <Form.Select
+                value={userIdSeleccionado ?? ''}
+                onChange={(e) => handleSeleccionarUsuario(e.target.value)}
+                isInvalid={!!errors.userId}
+              >
+                <option value="" disabled>Selecciona una cuenta con rol "doctor"</option>
+                {usuariosDisponibles.map((u) => (
+                  <option key={u.id} value={u.id}>{u.username} — {u.email}</option>
+                ))}
+              </Form.Select>
+              {errors.userId && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.userId.message}</Alert>}
+              {usuariosDisponibles.length === 0 && (
+                <Form.Text className="text-muted">
+                  No hay usuarios con rol "doctor" disponibles. Créalo primero en el módulo de Usuarios
+                  (todos los existentes ya tienen un odontólogo vinculado).
+                </Form.Text>
+              )}
+            </Form.Group>
+          )}
+
+          {odontologo && (
+            <Form.Group className="mb-3">
+              <Form.Label>Cuenta de usuario vinculada</Form.Label>
+              <Form.Control value={odontologo.userId ? 'Cuenta vinculada' : 'Sin vincular'} disabled readOnly />
+            </Form.Group>
+          )}
+
           <Form.Group className="mb-3">
             <Form.Label>Nombre</Form.Label>
             <Form.Control {...register('nombre')} isInvalid={!!errors.nombre} />
@@ -103,7 +167,12 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Email</Form.Label>
-            <Form.Control type="email" {...register('email')} isInvalid={!!errors.email} />
+            <Form.Control
+              type="email"
+              {...register('email')}
+              isInvalid={!!errors.email}
+              readOnly={!odontologo && !!usuarioElegido}
+            />
             {errors.email && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.email.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-3">
@@ -123,23 +192,11 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
               </Form.Text>
             )}
           </Form.Group>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-2">
             <Form.Label>Número de registro</Form.Label>
             <Form.Control {...register('numeroRegistro')} isInvalid={!!errors.numeroRegistro} />
-            {errors.numeroRegistro && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.numeroRegistro.message}</Alert>}
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label>Cuenta de usuario vinculada</Form.Label>
-            <Form.Select {...register('userId')} defaultValue="">
-              <option value="">Sin vincular</option>
-              {usuariosDoctor.map((u) => (
-                <option key={u.id} value={u.id}>{u.username} — {u.email}</option>
-              ))}
-            </Form.Select>
-            {usuariosDoctor.length === 0 && (
-              <Form.Text className="text-muted">
-                No hay usuarios con rol "doctor" todavía. Créalo primero en el módulo de Usuarios.
-              </Form.Text>
+            {errors.numeroRegistro && (
+              <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.numeroRegistro.message}</Alert>
             )}
           </Form.Group>
         </Modal.Body>

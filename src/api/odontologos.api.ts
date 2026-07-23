@@ -2,9 +2,15 @@ import { http } from './http'
 import type { ApiResponse, Paginated } from '@/types/common.types'
 import type { Odontologo, CreateOdontologoPayload } from '@/types/odontologo.types'
 import type { ListQuery } from '@/types/query.types'
+import type { User } from '@/types/user.types'
 
 export async function getOdontologos(query: ListQuery = { limit: 100 }) {
   const { data } = await http.get<ApiResponse<Paginated<Odontologo>>>('/odontologos', { params: query })
+  return data.data
+}
+
+export async function getUsuariosDisponiblesOdontologo() {
+  const { data } = await http.get<ApiResponse<User[]>>('/odontologos/usuarios-disponibles')
   return data.data
 }
 
