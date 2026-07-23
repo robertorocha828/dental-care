@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Container, Card, Table, Button, Badge, Form, Row, Col, Pagination } from 'react-bootstrap'
 import { getNotificaciones, deleteNotificacion } from '@/api/notificaciones.api'
 import type { Notificacion } from '@/types/notificacion.types'
-import NotificacionFormDialog from '@/components/private/NotificacionFormDialog'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useToastStore } from '@/store/toast.store'
 
@@ -19,8 +18,6 @@ export default function NotificacionesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [tipoFiltro, setTipoFiltro] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState('')
-  const [editing, setEditing] = useState<Notificacion | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Notificacion | null>(null)
   const showToast = useToastStore((s) => s.show)
 
@@ -53,11 +50,9 @@ export default function NotificacionesPage() {
 
   return (
     <Container>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="mb-4">
         <h4 className="fw-bold mb-0">Notificaciones</h4>
-        <Button variant="primary" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          Nueva notificación
-        </Button>
+        <p className="text-muted small mb-0">Registro de notificaciones enviadas por el sistema.</p>
       </div>
 
       <Row className="g-2 mb-3">
@@ -98,6 +93,7 @@ export default function NotificacionesPage() {
               <tr>
                 <th className="ps-4">Destinatario</th>
                 <th>Asunto</th>
+                <th>Mensaje</th>
                 <th>Tipo</th>
                 <th>Estado</th>
                 <th>Fecha</th>
@@ -107,7 +103,7 @@ export default function NotificacionesPage() {
             <tbody>
               {filtradas.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center text-muted py-4">
+                  <td colSpan={7} className="text-center text-muted py-4">
                     No hay notificaciones que coincidan con el filtro.
                   </td>
                 </tr>
@@ -116,18 +112,11 @@ export default function NotificacionesPage() {
                 <tr key={n.id}>
                   <td className="ps-4">{n.destinatario}</td>
                   <td>{n.asunto}</td>
+                  <td className="text-muted small" style={{ maxWidth: 280 }}>{n.mensaje}</td>
                   <td>{n.tipo ?? '—'}</td>
                   <td><Badge bg={ESTADO_VARIANT[n.estado] ?? 'secondary'}>{n.estado}</Badge></td>
                   <td>{n.creadoEn?.slice(0, 10)}</td>
                   <td className="text-end pe-4">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => { setEditing(n); setDialogOpen(true) }}
-                    >
-                      Editar
-                    </Button>
                     <Button variant="outline-danger" size="sm" onClick={() => setDeleteTarget(n)}>
                       Eliminar
                     </Button>
@@ -149,12 +138,6 @@ export default function NotificacionesPage() {
         </Pagination>
       )}
 
-      <NotificacionFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        notificacion={editing}
-        onSaved={load}
-      />
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
