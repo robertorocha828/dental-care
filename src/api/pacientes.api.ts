@@ -8,6 +8,11 @@ export async function getPacientes(query: ListQuery = {}) {
   return data.data
 }
 
+export async function getPaciente(id: string) {
+  const { data } = await http.get<ApiResponse<Paciente>>(`/pacientes/${id}`)
+  return data.data
+}
+
 export async function getPacienteByUsuario(userId: string) {
   const { data } = await http.get<ApiResponse<Paciente>>(`/pacientes/usuario/${userId}`)
   return data.data

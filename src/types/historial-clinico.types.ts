@@ -7,6 +7,7 @@ export interface HistorialClinico {
   motivoConsulta: string
   diagnostico: string
   procedimientosRealizados?: string
+  tratamientosIds?: string[]
   proximaVisita?: string
   observaciones?: string
 }
@@ -19,6 +20,7 @@ export interface CreateHistorialClinicoPayload {
   motivoConsulta: string
   diagnostico: string
   procedimientosRealizados?: string
+  tratamientosIds?: string[]
   proximaVisita?: string
   observaciones?: string
 }

@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Container, Form, Card, Alert, Spinner, Table, Badge, Button } from 'react-bootstrap'
-import { getPacientes } from '@/api/pacientes.api'
-import { getOdontologoByUsuario } from '@/api/odontologos.api'
+import { getPaciente } from '@/api/pacientes.api'
+import { getOdontologoByUsuario, getOdontologos } from '@/api/odontologos.api'
 import { getOdontogramasByPaciente, createOdontograma, updateDiente } from '@/api/odontograma.api'
 import { getCitasByOdontologo } from '@/api/citas.api'
 import { getHistorialByPaciente } from '@/api/historial-clinico.api'
+import { getTratamientos } from '@/api/tratamientos.api'
 import { useAuthStore } from '@/store/auth.store'
 import Odontograma, { CICLO_ESTADOS } from '@/components/private/Odontograma'
 import AtenderCitaDialog from '@/components/private/AtenderCitaDialog'
 import EditarHistorialDialog from '@/components/private/EditarHistorialDialog'
 import type { Paciente } from '@/types/paciente.types'
 import type { Cita } from '@/types/cita.types'
+import type { Odontologo } from '@/types/odontologo.types'
+import type { Tratamiento } from '@/types/tratamiento.types'
 import type { Odontograma as OdontogramaType, Superficies } from '@/types/odontograma.types'
 import type { HistorialClinico } from '@/types/historial-clinico.types'
 
 export default function HistorialClinicoPage() {
   const userId = useAuthStore((s) => s.userId)
   const [pacientes, setPacientes] = useState<Paciente[]>([])
+  const [odontologos, setOdontologos] = useState<Odontologo[]>([])
+  const [tratamientos, setTratamientos] = useState<Tratamiento[]>([])
   const [citas, setCitas] = useState<Cita[]>([])
   const [pacienteId, setPacienteId] = useState('')
   const [odontologoId, setOdontologoId] = useState<string | null>(null)
@@ -27,18 +32,26 @@ export default function HistorialClinicoPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const cargarCitas = async (odId: string) => {
-    const result = await getCitasByOdontologo(odId, { limit: 50 })
+  // Solo pacientes que han tenido al menos una cita con este odontólogo.
+  const cargarMisPacientes = async (odId: string) => {
+    const result = await getCitasByOdontologo(odId, { limit: 100 })
     setCitas(result.items.filter((c) => c.estado === 'agendada'))
+
+    const idsUnicos = Array.from(new Set(result.items.map((c) => c.pacienteId).filter((id): id is string => !!id)))
+    const encontrados = await Promise.all(
+      idsUnicos.map((id) => getPaciente(id).catch(() => null)),
+    )
+    setPacientes(encontrados.filter((p): p is Paciente => !!p))
   }
 
   useEffect(() => {
-    getPacientes({ limit: 100 }).then((r) => setPacientes(r.items))
+    getOdontologos({ limit: 100 }).then((r) => setOdontologos(r.items))
+    getTratamientos().then(setTratamientos)
     if (userId) {
       getOdontologoByUsuario(userId)
         .then((o) => {
           setOdontologoId(o.id)
-          cargarCitas(o.id)
+          cargarMisPacientes(o.id)
         })
         .catch(() => setError('No se encontró tu ficha de odontólogo. Pide al admin que la vincule a tu usuario.'))
     }
@@ -106,6 +119,18 @@ export default function HistorialClinicoPage() {
     setOdontograma(actualizado)
   }
 
+  const nombreDoctor = (id: string) => {
+    const o = odontologos.find((x) => x.id === id)
+    return o ? `${o.nombre} ${o.apellido}` : '—'
+  }
+
+  const nombresTratamientos = (ids?: string[]) => {
+    if (!ids || ids.length === 0) return []
+    return ids.map((id) => tratamientos.find((t) => String(t.id) === id)?.nombre ?? id)
+  }
+
+  const pacienteSeleccionado = pacientes.find((p) => p.id === pacienteId) ?? null
+
   return (
     <Container>
       <h4 className="fw-bold mb-4">Historial clínico</h4>
@@ -144,7 +169,7 @@ export default function HistorialClinicoPage() {
         </Card.Body>
       </Card>
 
-      {/* Selector manual de paciente (por si no viene de una cita) */}
+      {/* Selector manual, solo entre pacientes que ya han tenido cita con este odontólogo */}
       <Card className="border-0 shadow-sm mb-4">
         <Card.Body className="p-4">
           <Form.Group style={{ maxWidth: 420 }}>
@@ -161,6 +186,11 @@ export default function HistorialClinicoPage() {
             </Form.Select>
             {!odontologoId && !error && (
               <Form.Text className="text-muted">Cargando tu ficha de odontólogo...</Form.Text>
+            )}
+            {odontologoId && pacientes.length === 0 && (
+              <Form.Text className="text-muted">
+                Todavía no tienes pacientes: aparecerán aquí en cuanto tengas una cita agendada con alguno.
+              </Form.Text>
             )}
           </Form.Group>
         </Card.Body>
@@ -194,15 +224,17 @@ export default function HistorialClinicoPage() {
                 <thead>
                   <tr>
                     <th className="ps-4">Fecha</th>
+                    <th>Doctor</th>
                     <th>Motivo</th>
                     <th>Diagnóstico</th>
+                    <th>Tratamientos aplicados</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
                   {historial.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center text-muted py-3">
+                      <td colSpan={6} className="text-center text-muted py-3">
                         Este paciente todavía no tiene consultas registradas.
                       </td>
                     </tr>
@@ -210,8 +242,16 @@ export default function HistorialClinicoPage() {
                   {historial.map((h) => (
                     <tr key={h._id}>
                       <td className="ps-4">{new Date(h.fechaConsulta).toLocaleDateString('es-EC')}</td>
+                      <td>{nombreDoctor(h.odontologoId)}</td>
                       <td>{h.motivoConsulta}</td>
                       <td>{h.diagnostico}</td>
+                      <td>
+                        {nombresTratamientos(h.tratamientosIds).length === 0
+                          ? <span className="text-muted small">—</span>
+                          : nombresTratamientos(h.tratamientosIds).map((n) => (
+                            <Badge key={n} bg="light" text="dark" className="border me-1 mb-1">{n}</Badge>
+                          ))}
+                      </td>
                       <td className="text-end pe-4">
                         <Button
                           variant="outline-secondary"
@@ -239,8 +279,9 @@ export default function HistorialClinicoPage() {
         onOpenChange={(open) => !open && setCitaAtender(null)}
         cita={citaAtender}
         odontologoId={odontologoId ?? ''}
+        pacienteEmail={pacienteSeleccionado?.email}
         onSaved={() => {
-          if (odontologoId) cargarCitas(odontologoId)
+          if (odontologoId) cargarMisPacientes(odontologoId)
           if (pacienteId) cargarHistorial(pacienteId)
         }}
       />
