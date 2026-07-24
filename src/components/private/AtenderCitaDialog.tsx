@@ -86,7 +86,8 @@ export default function AtenderCitaDialog({ open, onOpenChange, cita, odontologo
       } catch (err: any) {
         showToast(
           err?.response?.data?.message ??
-          'Consulta guardada, pero no se pudo agendar automáticamente la próxima cita (agéndala manualmente)'
+          'Consulta guardada, pero no se pudo agendar automáticamente la próxima cita (agéndala manualmente)',
+          'warning'
         )
       }
     } else {

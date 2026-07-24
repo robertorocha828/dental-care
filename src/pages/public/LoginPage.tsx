@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { login as loginApi, googleAuthUrl } from '@/api/auth.api'
 import { useAuthStore } from '@/store/auth.store'
+import { useToastStore } from '@/store/toast.store'
 import { decodeToken } from '@/lib/jwt'
 
 const schema = z.object({
@@ -16,18 +17,23 @@ type FormValues = z.infer<typeof schema>
 export default function LoginPage() {
   const navigate = useNavigate()
   const setToken = useAuthStore((s) => s.setToken)
+  const showToast = useToastStore((s) => s.show)
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const onSubmit = async (values: FormValues) => {
-    const token = await loginApi({ email: values.email, password: values.password })
-    setToken(token)
+    try {
+      const token = await loginApi({ email: values.email, password: values.password })
+      setToken(token)
 
-    const payload = decodeToken(token)
-    if (payload?.rol === 'paciente') {
-      navigate('/portal')
-    } else {
-      navigate('/dashboard')
+      const payload = decodeToken(token)
+      if (payload?.rol === 'paciente') {
+        navigate('/portal')
+      } else {
+        navigate('/dashboard')
+      }
+    } catch (err: any) {
+      showToast(err?.response?.data?.message ?? 'Credenciales inválidas', 'error')
     }
   }
 

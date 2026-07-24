@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Container, Row, Col } from 'react-bootstrap'
-import { Phone, Mail, MapPin, Clock, Globe, Instagram } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, Globe, Share2 } from 'lucide-react'
 
 const NAVY = '#0a2540'
 const TEAL = '#1b8a9c'
@@ -47,7 +47,7 @@ export default function PublicFooter() {
             </ul>
             <div className="d-flex gap-3">
               <Globe size={18} style={{ color: TEAL }} />
-              <Instagram size={18} style={{ color: TEAL }} />
+              <Share2 size={18} style={{ color: TEAL }} />
             </div>
           </Col>
         </Row>
