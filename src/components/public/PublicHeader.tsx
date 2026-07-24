@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Navbar, Container, Nav, Button } from 'react-bootstrap'
-import { Smile, Phone, UserPlus } from 'lucide-react'
+import { Phone, UserPlus } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 
 const NAVY = '#0a2540'
@@ -28,8 +28,8 @@ export default function PublicHeader() {
       >
         <Container>
           <Navbar.Brand as={NavLink} to="/" className="fw-bold d-flex align-items-center gap-2">
-            <Smile size={26} style={{ color: TEAL }} />
-            Consultorio Odontológico
+            <img src="/logo-tooth.png" alt="DentalCare" width={28} height={28} />
+            DentalCare
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="main-nav" />
           <Navbar.Collapse id="main-nav">

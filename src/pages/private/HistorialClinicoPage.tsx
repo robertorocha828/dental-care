@@ -17,6 +17,14 @@ import type { Tratamiento } from '@/types/tratamiento.types'
 import type { Odontograma as OdontogramaType, Superficies } from '@/types/odontograma.types'
 import type { HistorialClinico } from '@/types/historial-clinico.types'
 
+function esCitaAtendible(fechaHora: string): boolean {
+  const fecha = new Date(fechaHora)
+  const hoy = new Date()
+  const f = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+  const h = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+  return f.getTime() <= h.getTime()
+}
+
 export default function HistorialClinicoPage() {
   const userId = useAuthStore((s) => s.userId)
   const [pacientes, setPacientes] = useState<Paciente[]>([])
@@ -32,7 +40,6 @@ export default function HistorialClinicoPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Solo pacientes que han tenido al menos una cita con este odontólogo.
   const cargarMisPacientes = async (odId: string) => {
     const result = await getCitasByOdontologo(odId, { limit: 100 })
     setCitas(result.items.filter((c) => c.estado === 'agendada'))
@@ -135,7 +142,6 @@ export default function HistorialClinicoPage() {
     <Container>
       <h4 className="fw-bold mb-4">Historial clínico</h4>
 
-      {/* Citas pendientes del doctor */}
       <Card className="border-0 shadow-sm mb-4">
         <Card.Body className="p-0">
           <Card.Title className="fw-bold small text-uppercase text-muted p-4 pb-0 mb-2">
@@ -155,21 +161,31 @@ export default function HistorialClinicoPage() {
                   <td colSpan={3} className="text-center text-muted py-3">No tienes citas agendadas.</td>
                 </tr>
               )}
-              {citas.map((c) => (
-                <tr key={c.id}>
-                  <td className="ps-4">{new Date(c.fechaHora).toLocaleString('es-EC')}</td>
-                  <td>{c.motivo}</td>
-                  <td className="text-end pe-4">
-                    <Button size="sm" variant="primary" onClick={() => atenderCita(c)}>Atender</Button>
-                  </td>
-                </tr>
-              ))}
+              {citas.map((c) => {
+                const atendible = esCitaAtendible(c.fechaHora)
+                return (
+                  <tr key={c.id}>
+                    <td className="ps-4">{new Date(c.fechaHora).toLocaleString('es-EC')}</td>
+                    <td>{c.motivo}</td>
+                    <td className="text-end pe-4">
+                      <Button
+                        size="sm"
+                        variant={atendible ? 'primary' : 'outline-secondary'}
+                        disabled={!atendible}
+                        title={atendible ? undefined : 'Todavía no es el día de esta cita'}
+                        onClick={() => atenderCita(c)}
+                      >
+                        {atendible ? 'Atender' : 'Aún no es el día'}
+                      </Button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </Table>
         </Card.Body>
       </Card>
 
-      {/* Selector manual, solo entre pacientes que ya han tenido cita con este odontólogo */}
       <Card className="border-0 shadow-sm mb-4">
         <Card.Body className="p-4">
           <Form.Group style={{ maxWidth: 420 }}>
@@ -214,7 +230,6 @@ export default function HistorialClinicoPage() {
           )}
           <Odontograma dientes={odontograma.dientes} onSurfaceClick={handleSurfaceClick} />
 
-          {/* Historial de consultas pasadas de este paciente */}
           <Card className="border-0 shadow-sm mt-4">
             <Card.Body className="p-0">
               <Card.Title className="fw-bold small text-uppercase text-muted p-4 pb-0 mb-2">
