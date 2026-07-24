@@ -6,6 +6,7 @@ import { Modal, Button, Form, Alert } from 'react-bootstrap'
 import { createOdontologo, updateOdontologo, getUsuariosDisponiblesOdontologo } from '@/api/odontologos.api'
 import { getEspecialidades } from '@/api/especialidades.api'
 import { useToastStore } from '@/store/toast.store'
+import { esCedulaEcuatorianaValida, esCelularEcuatorianoValido } from '@/lib/validaciones-ec'
 import type { Odontologo } from '@/types/odontologo.types'
 import type { User } from '@/types/user.types'
 import type { Especialidad } from '@/types/especialidad.types'
@@ -15,11 +16,10 @@ const schema = z.object({
   userId: z.string().optional(),
   nombre: z.string().min(1, 'Requerido'),
   apellido: z.string().min(1, 'Requerido'),
-  cedula: z.string().min(1, 'Requerido'),
-  telefono: z.string().min(1, 'Requerido'),
+  cedula: z.string().min(1, 'Requerido').refine(esCedulaEcuatorianaValida, 'Cédula ecuatoriana no válida'),
+  telefono: z.string().min(1, 'Requerido').refine(esCelularEcuatorianoValido, 'Debe tener 10 dígitos y empezar con 0'),
   email: z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
   especialidadId: z.string().min(1, 'Selecciona una especialidad'),
-  numeroRegistro: z.string().min(1, 'Requerido'),
 }).superRefine((data, ctx) => {
   if (data._isCreate && !data.userId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecciona una cuenta de usuario', path: ['userId'] })
@@ -69,7 +69,6 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
       telefono:       odontologo?.telefono ?? '',
       email:          odontologo?.email ?? '',
       especialidadId: odontologo?.especialidadId ? String(odontologo.especialidadId) : '',
-      numeroRegistro: odontologo?.numeroRegistro ?? '',
     })
   }, [odontologo, open, reset])
 
@@ -93,7 +92,6 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
       email: values.email || undefined,
       especialidadId: Number(values.especialidadId),
       userId: values.userId || undefined,
-      numeroRegistro: values.numeroRegistro,
     }
     if (odontologo) {
       await updateOdontologo(odontologo.id, payload)
@@ -157,12 +155,12 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Cédula</Form.Label>
-            <Form.Control {...register('cedula')} isInvalid={!!errors.cedula} />
+            <Form.Control {...register('cedula')} maxLength={10} isInvalid={!!errors.cedula} />
             {errors.cedula && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.cedula.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Teléfono</Form.Label>
-            <Form.Control {...register('telefono')} isInvalid={!!errors.telefono} />
+            <Form.Control {...register('telefono')} maxLength={10} placeholder="09XXXXXXXX" isInvalid={!!errors.telefono} />
             {errors.telefono && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.telefono.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-3">
@@ -194,10 +192,11 @@ export default function OdontologoFormDialog({ open, onOpenChange, odontologo, o
           </Form.Group>
           <Form.Group className="mb-2">
             <Form.Label>Número de registro</Form.Label>
-            <Form.Control {...register('numeroRegistro')} isInvalid={!!errors.numeroRegistro} />
-            {errors.numeroRegistro && (
-              <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.numeroRegistro.message}</Alert>
-            )}
+            <Form.Control
+              value={odontologo?.numeroRegistro ?? 'Se generará automáticamente'}
+              disabled
+              readOnly
+            />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
