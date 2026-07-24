@@ -11,7 +11,6 @@ export default function PublicHeader() {
 
   return (
     <>
-      {/* Barra superior de contacto */}
       <div className="text-white py-1 small d-none d-md-block" style={{ backgroundColor: NAVY }}>
         <Container className="d-flex justify-content-end gap-3">
           <span className="d-flex align-items-center gap-1">
@@ -36,7 +35,7 @@ export default function PublicHeader() {
           <Navbar.Collapse id="main-nav">
             <Nav className="ms-auto gap-1 align-items-center">
               <Nav.Link as={NavLink} to="/" end>Inicio</Nav.Link>
-              <Nav.Link as={NavLink} to="/especialidades">Especialidades</Nav.Link>
+              <Nav.Link as={NavLink} to="/servicios">Nuestros servicios</Nav.Link>
               {isAuthenticated ? (
                 <Nav.Link as={NavLink} to="/dashboard">
                   <Button variant="outline-light" size="sm">Dashboard</Button>
