@@ -19,6 +19,6 @@ export interface CreateOdontologoPayload {
   telefono: string
   email?: string
   especialidadId?: number
-  numeroRegistro: string
+  numeroRegistro?: string
   userId?: string
 }

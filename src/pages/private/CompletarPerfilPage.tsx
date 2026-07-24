@@ -7,20 +7,19 @@ import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { getUser } from '@/api/users.api'
 import { createPaciente } from '@/api/pacientes.api'
 import { useAuthStore } from '@/store/auth.store'
+import { esCedulaEcuatorianaValida, esCelularEcuatorianoValido, esFechaNacimientoValida } from '@/lib/validaciones-ec'
 import type { User } from '@/types/user.types'
 
 const schema = z.object({
   nombre:          z.string().min(1, 'Requerido'),
   apellido:        z.string().min(1, 'Requerido'),
-  cedula:          z.string().min(1, 'Requerido'),
-  telefono:        z.string().min(1, 'Requerido'),
-  fechaNacimiento: z.string().min(1, 'Requerido'),
+  cedula:          z.string().min(1, 'Requerido').refine(esCedulaEcuatorianaValida, 'Cédula ecuatoriana no válida'),
+  telefono:        z.string().min(1, 'Requerido').refine(esCelularEcuatorianoValido, 'Debe tener 10 dígitos y empezar con 0'),
+  fechaNacimiento: z.string().min(1, 'Requerido').refine(esFechaNacimientoValida, 'Fecha de nacimiento no válida'),
   genero:          z.enum(['masculino', 'femenino', 'otro']),
 })
 type FormValues = z.infer<typeof schema>
 
-// Los usuarios que entran por Google no traen cédula/teléfono/fecha de
-// nacimiento, así que antes de usar el portal completan estos datos aquí.
 export default function CompletarPerfilPage() {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.userId)
@@ -73,17 +72,17 @@ export default function CompletarPerfilPage() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Cédula</Form.Label>
-              <Form.Control {...register('cedula')} isInvalid={!!errors.cedula} />
+              <Form.Control {...register('cedula')} maxLength={10} isInvalid={!!errors.cedula} />
               {errors.cedula && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.cedula.message}</Alert>}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Teléfono</Form.Label>
-              <Form.Control {...register('telefono')} isInvalid={!!errors.telefono} />
+              <Form.Control {...register('telefono')} maxLength={10} placeholder="09XXXXXXXX" isInvalid={!!errors.telefono} />
               {errors.telefono && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.telefono.message}</Alert>}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Fecha de nacimiento</Form.Label>
-              <Form.Control type="date" {...register('fechaNacimiento')} isInvalid={!!errors.fechaNacimiento} />
+              <Form.Control type="date" max={new Date().toISOString().slice(0, 10)} {...register('fechaNacimiento')} isInvalid={!!errors.fechaNacimiento} />
               {errors.fechaNacimiento && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.fechaNacimiento.message}</Alert>}
             </Form.Group>
             <Form.Group className="mb-4">

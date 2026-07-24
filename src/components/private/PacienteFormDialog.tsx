@@ -5,16 +5,17 @@ import { z } from 'zod'
 import { Modal, Button, Form, Alert } from 'react-bootstrap'
 import { createPaciente, updatePaciente } from '@/api/pacientes.api'
 import { useToastStore } from '@/store/toast.store'
+import { esCedulaEcuatorianaValida, esCelularEcuatorianoValido, esFechaNacimientoValida } from '@/lib/validaciones-ec'
 import type { Paciente } from '@/types/paciente.types'
 
 const schema = z.object({
-  cedula:          z.string().min(1, 'Requerido'),
-  nombre:          z.string().min(1, 'Requerido'),
-  apellido:        z.string().min(1, 'Requerido'),
-  telefono:        z.string().min(1, 'Requerido'),
-  email:           z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
-  fechaNacimiento: z.string().min(1, 'Requerido'),
-  genero:          z.enum(['masculino', 'femenino', 'otro']),
+  cedula: z.string().min(1, 'Requerido').refine(esCedulaEcuatorianaValida, 'Cédula ecuatoriana no válida'),
+  nombre: z.string().min(1, 'Requerido'),
+  apellido: z.string().min(1, 'Requerido'),
+  telefono: z.string().min(1, 'Requerido').refine(esCelularEcuatorianoValido, 'Debe tener 10 dígitos y empezar con 0'),
+  email: z.union([z.string().email('Email inválido'), z.literal('')]).optional(),
+  fechaNacimiento: z.string().min(1, 'Requerido').refine(esFechaNacimientoValida, 'Fecha de nacimiento no válida'),
+  genero: z.enum(['masculino', 'femenino', 'otro']),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -77,12 +78,12 @@ export default function PacienteFormDialog({ open, onOpenChange, paciente, onSav
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Cédula</Form.Label>
-            <Form.Control {...register('cedula')} isInvalid={!!errors.cedula} />
+            <Form.Control {...register('cedula')} maxLength={10} isInvalid={!!errors.cedula} />
             {errors.cedula && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.cedula.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Teléfono</Form.Label>
-            <Form.Control {...register('telefono')} isInvalid={!!errors.telefono} />
+            <Form.Control {...register('telefono')} maxLength={10} placeholder="09XXXXXXXX" isInvalid={!!errors.telefono} />
             {errors.telefono && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.telefono.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-3">
@@ -92,7 +93,7 @@ export default function PacienteFormDialog({ open, onOpenChange, paciente, onSav
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Fecha de nacimiento</Form.Label>
-            <Form.Control type="date" {...register('fechaNacimiento')} isInvalid={!!errors.fechaNacimiento} />
+            <Form.Control type="date" max={new Date().toISOString().slice(0, 10)} {...register('fechaNacimiento')} isInvalid={!!errors.fechaNacimiento} />
             {errors.fechaNacimiento && <Alert variant="danger" className="mt-1 py-1 px-2 small">{errors.fechaNacimiento.message}</Alert>}
           </Form.Group>
           <Form.Group className="mb-2">
